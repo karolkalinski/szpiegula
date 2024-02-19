@@ -1,0 +1,6 @@
+{
+ "type": "module",
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.33.2"
+  }
+}
