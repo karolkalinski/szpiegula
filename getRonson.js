@@ -1,6 +1,7 @@
-var fs = require('fs');
+import * as fs from 'fs';
+import { savePoint } from './saveData.js';
 
-apartamentsNames = [ '11-A001', '11-A006', '11-A010', '11-A014', '11-A018', '11-A022', '11-A026', '11-A030' ]
+const apartmentsNames = [ '11-A001', '11-A006', '11-A010', '11-A014', '11-A018', '11-A022', '11-A026', '11-A030' ]
 
 async function fetchData() {
 const response = await fetch("https://ronson.pl/api/apartments/search?page=1", {
@@ -30,8 +31,10 @@ const response = await fetch("https://ronson.pl/api/apartments/search?page=1", {
 	console.log(prices);
         const now = new Date(Date.now());
 	const date = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`
-        dataToStore = apartamentsNames.map(name => prices[name].display ? prices[name].price : 'Do not display').join(',');
+        const dataToStore = apartmentsNames.map(name => prices[name].display ? prices[name].price : 'Do not display').join(',');
         fs.appendFileSync('ronson.csv',`${date},${total},${dataToStore}\n`);
+	data.data.forEach(async apartment => await savePoint(apartment.name, apartment.display, apartment.brutto));
 }
+
 
 fetchData()

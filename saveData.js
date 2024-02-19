@@ -7,6 +7,7 @@ import {InfluxDB, Point, HttpError} from '@influxdata/influxdb-client'
 import {url, token, org, bucket} from './env.mjs'
 import {hostname} from 'node:os'
 
+export async function savePoint(name, display, price) {
 console.log('*** WRITE POINTS ***')
 // create a write API, expecting point timestamps in nanoseconds (can be also 's', 'ms', 'us')
 const writeApi = new InfluxDB({url, token}).getWriteApi(org, bucket, 'ns')
@@ -15,9 +16,9 @@ writeApi.useDefaultTags({location: hostname()})
 
 // write point with the current (client-side) timestamp
 const point1 = new Point('price')
-  .tag('apartament','11-A001')
-  .tag('display', true)
-  .floatField('price','829836.9')
+  .tag('apartament',name)
+  .tag('display', display)
+  .floatField('price', price)
 writeApi.writePoint(point1)
 console.log(` ${point1}`)
 // write point with a custom timestamp
@@ -44,3 +45,5 @@ try {
   }
   console.log('\nFinished ERROR')
 }
+}
+
