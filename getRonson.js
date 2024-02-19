@@ -40,20 +40,21 @@ async function fetchData() {
 	 const { data, meta }  = await response.json();
          data.forEach( item => apartments.push(item));
          console.log(meta);
-         lastPage = meta.current_page === meta.last_page; 
-         url = meta.next_page_url;
+         lastPage = meta.current_page !== meta.last_page; 
+         console.log(lastPage);
+	 url = meta.next_page_url;
  	 total = meta.total;
 
 	} while (lastPage)
-        console.log(apartments);	
-
+//        console.log(apartments);	
         const prices = apartments.reduce((result, apartment)  => ({ ...result, [apartment.name]: { price: apartment.brutto, display: apartment.display }}), {})
 	console.log(prices);
         const now = new Date(Date.now());
 	const date = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`
         const dataToStore = apartmentsNames.map(name => prices[name].display ? prices[name].price : 'Do not display').join(',');
         fs.appendFileSync('ronson.csv',`${date},${total},${dataToStore}\n`);
-	apartments.forEach(async apartment => await savePoint(apartment.name, apartment.display, apartment.brutto));
+	apartments.filter(apartment => apartment.brutto != null).forEach(async apartment =>  
+            await savePoint(apartment.name, apartment.display, apartment.brutto));
 }
 
 
