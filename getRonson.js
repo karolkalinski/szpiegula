@@ -3,8 +3,11 @@ import { savePoint } from './saveData.js';
 
 const apartmentsNames = [ '11-A001', '11-A006', '11-A010', '11-A014', '11-A018', '11-A022', '11-A026', '11-A030' ]
 
-async function fetchData() {
-const response = await fetch("https://ronson.pl/api/apartments/search?page=1", {
+
+async function getPage(url) {
+
+
+return fetch(url, {
   "headers": {
     "accept": "application/json, text/javascript, */*; q=0.01",
     "accept-language": "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -22,18 +25,35 @@ const response = await fetch("https://ronson.pl/api/apartments/search?page=1", {
     "Referer": "https://ronson.pl/ursus-centralny/szukaj-mieszkania/",
     "Referrer-Policy": "strict-origin-when-cross-origin"
   },
-  "body": "city=warszawa&district=ursus&investment%5B%5D=ursus-centralny&stage=&sort=&rooms%5B%5D=3&rooms%5B%5D=3&floor%5B%5D=0&floor%5B%5D=7&area%5B%5D=57&area%5B%5D=59&type=&mdm=&entresol=&promo=&complete=",
+  "body": "city=warszawa&district=ursus&investment%5B%5D=ursus-centralny&stage=&sort=&rooms%5B%5D=1&rooms%5B%5D=7&floor%5B%5D=0&floor%5B%5D=7&area%5B%5D=10&area%5B%5D=100&type=&mdm=&entresol=&promo=&complete=",
   "method": "POST"
 });
-	const data = await response.json();
-	const prices = data.data.reduce((result, apartment)  => ({ ...result, [apartment.name]: { price: apartment.brutto, display: apartment.display }}), {})
-	const total = data.meta.total;
+};
+
+async function fetchData() {
+        let url = 'https://ronson.pl/api/apartments/search?page=1'
+	const apartments = [];
+        let lastPage = false;
+        let total;
+	do {
+         const response = await getPage(url)        
+	 const { data, meta }  = await response.json();
+         data.forEach( item => apartments.push(item));
+         console.log(meta);
+         lastPage = meta.current_page === meta.last_page; 
+         url = meta.next_page_url;
+ 	 total = meta.total;
+
+	} while (lastPage)
+        console.log(apartments);	
+
+        const prices = apartments.reduce((result, apartment)  => ({ ...result, [apartment.name]: { price: apartment.brutto, display: apartment.display }}), {})
 	console.log(prices);
         const now = new Date(Date.now());
 	const date = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`
         const dataToStore = apartmentsNames.map(name => prices[name].display ? prices[name].price : 'Do not display').join(',');
         fs.appendFileSync('ronson.csv',`${date},${total},${dataToStore}\n`);
-	data.data.forEach(async apartment => await savePoint(apartment.name, apartment.display, apartment.brutto));
+	apartments.forEach(async apartment => await savePoint(apartment.name, apartment.display, apartment.brutto));
 }
 
 
